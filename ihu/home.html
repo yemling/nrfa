@@ -8,9 +8,10 @@
 	integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
 	crossorigin=""/>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-	<link href="/i/map.css" type="text/css" rel="stylesheet" />
-	<link href="/i/MarkerCluster.css" type="text/css" rel="stylesheet" />
-	<link href="/i/MarkerCluster.default.css" type="text/css" rel="stylesheet" />
+	<link href="/nrfa/i/map.css" type="text/css" rel="stylesheet" />
+	<link rel="stylesheet" href="/nrfa/i/loading.css" />
+	<link href="/nrfa/i/MarkerCluster.css" type="text/css" rel="stylesheet" />
+	<link href="/nrfa/i/MarkerCluster.default.css" type="text/css" rel="stylesheet" />
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js"
 	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
 	crossorigin="anonymous"></script>
@@ -18,13 +19,21 @@
 	<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
 	integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
 	crossorigin="anonymous"></script>
-	<script type="text/javascript" src="/i/leaflet.markercluster.js"></script>
+	<script type="text/javascript" src="/nrfa/i/leaflet.markercluster.js"></script>
 	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-	<script src="/i/utils.js" type="text/javascript"></script>
+	<script src="/nrfa/i/utils.js" type="text/javascript"></script>
 	<script src="ihuMap.js" type="text/javascript"></script>
 	<script src="nrfaFtns.js" type="text/javascript"></script>
 </head>
 <body>
+<div id="loadingBackground"> </div>
+<div id="bowlG">
+  <div id="bowl_ringG">
+    <div class="ball_holderG">
+      <div class="ballG"> </div>
+    </div>
+  </div>
+</div>
 <noscript>Please enable JavaScript to use this page</noscript>
 <h1>Integrated Hydrological Units</h1>
 <h2>Standard Precipitation Index &mdash; 12 months</h2>
@@ -47,14 +56,6 @@
 		<br clear="all" />
 		<span class="label monthStart"></span>
 		<div id="mapDates" title="Month">
-			<div id="month-handle" class="ui-slider-handle controlHandle"></div>
-		</div>
-		<span class="label monthEnd"></span>
-		<br clear="all" />
-		<label for="month-handle">SPI range</label>
-		<br clear="all" />
-		<span class="label monthStart"></span>
-		<div id="spiRangeSlider" title="Month">
 			<div id="month-handle" class="ui-slider-handle controlHandle"></div>
 		</div>
 		<span class="label monthEnd"></span>

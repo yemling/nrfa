@@ -20,13 +20,13 @@ spiMap.drawMap = function()
 	spiMap.stationID = wrUtils.getParameterByName('station');
 	//set up the leaflet map at the UK boundary using mapbox.
 	spiMap.drawSPIlayer();
-	/* if(!(spiMap.stationID === null) && !isNaN(spiMap.stationID))
+	if(!(spiMap.stationID === null) && !isNaN(spiMap.stationID))
 	{
 		spiMap.createStationData();
 	}	
 	else {
 		spiMap.getNRFAstations();
-	}  */
+	}
 	$('.toggleLayer').click(spiMap.toggleLayer);
 	return;
 }

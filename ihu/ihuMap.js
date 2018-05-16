@@ -24,12 +24,24 @@ ihuMap.spiPeriods = [
 ];
 ihuMap.spiLayerOptions = {
 		period:3,
-		opacity:0.8
+		opacity:0.8,
+		dateIndex:0
 }
 ihuMap.spiClasses = [];
 //set the defaults for the SPI map to be overwritten onclick later.
 ihuMap.init = function()
 {
+	 var $loading = $('#bowlG').hide();
+    //ajax feedback
+    $(document)
+        .ajaxStart(function() {
+            $loading.fadeIn();
+            $('#loadingBackground').addClass('loading');
+        })
+        .ajaxStop(function() {
+            $loading.fadeOut();
+            $('#loadingBackground').removeClass('loading');
+    });
 	//jQuery sliders for the opacity and month options.
 	var opacityHandle = $( "#opacity-handle" );
 	var monthHandle = $( "#month-handle" );
@@ -46,6 +58,7 @@ ihuMap.init = function()
 			monthHandle.text(wrUtils.formatDate(ui.value).shortDate);
 			monthHandle.attr('title',wrUtils.formatDate(ui.value).shortDate);
 			ihuMap.spiLayerOptions.month = wrUtils.formatDate(ui.value).yearMon;
+			ihuMap.spiLayerOptions.dateIndex = ui.value;
 			ihuMap.getSPIclasses();
 			if(spiGridLayer)
 			{
@@ -74,20 +87,6 @@ ihuMap.init = function()
 			ihuMap.updateSPIoptions();
 		}                
 	});
-	$('#spiRangeSlider').slider({
-    min: 0, 
-	max: wrUtils.mapDates.length-1, 
-	range: true,
-    slide: function (ev, ui) {
-        var total = ui.value;
-        //if first one minus second one more than ten...
-        if (total > 10) {
-            return false;
-        }
-        $('#total').text(total);
-		//so can limit the amount of spi stats drawn at one.
-    }
-});
 	ihuMap.drawMap();
 	$('.spiPeriod').click(ihuMap.updateSPIoptions);
 	return;
@@ -359,43 +358,64 @@ ihuMap.getSpiStatistics = function(e)
 	//get all the class json files and loop through them to get the data for a particular polygon
 	var featureProperties = e.target.feature.properties;
 	$('#spiBlocks').empty();
-	$.each(wrUtils.mapDates,function(i,d)
+	var i = 0;
+	if((ihuMap.spiLayerOptions.dateIndex - 5) > 0)
 	{
-		var spiCurrentDate = wrUtils.formatDate(i);
-		var featureData = {spiDate: spiCurrentDate, haNum: featureProperties.ihuID, name: featureProperties.areaRef};
-		if(ihuMap.spiClasses.length > 0)
+		i = ihuMap.spiLayerOptions.dateIndex - 5;
+	}
+	else
+	{
+		//i = ihuMap.spiLayerOptions.dateIndex;
+		var j = ihuMap.spiLayerOptions.dateIndex;
+		while (j > 1)
 		{
-			var monthData = $.grep(ihuMap.spiClasses,function(obj)
+			j = j-1;
+			i = j;
+		}
+	}
+	var counter = 0;
+	for(i;i<wrUtils.mapDates.length;i++)
+	{
+		if(counter < 10)
+		{
+			var spiCurrentDate = wrUtils.formatDate(i);
+			var featureData = {spiDate: spiCurrentDate, haNum: featureProperties.ihuID, name: featureProperties.areaRef};
+			if(ihuMap.spiClasses.length > 0)
 			{
-				return obj.month === featureData.spiDate.yearMon;
-			})[0];
-		}
-		if(typeof monthData != 'undefined')
-		{
-			ihuMap.drawSpiStatistics(featureData);
-		}
-		//load in the SPI json for that month
-		else
-		{
-			$.ajax({
-				url:'docs/spi_class_'+ihuMap.visibleLayer+'_months/'+wrUtils.getMapLayer(ihuMap.areaFiles,ihuMap.visibleLayer).filePrefix+wrUtils.formatDate(i).yearMon+'.json',
-				data: {spiDate:spiCurrentDate},
-				processData:false,
-				success: function(spiClasses)
+				var monthData = $.grep(ihuMap.spiClasses,function(obj)
 				{
-					if(spiClasses.length > 0)
+					return obj.month === featureData.spiDate.yearMon;
+				})[0];
+			}
+			if(typeof monthData != 'undefined')
+			{
+				ihuMap.drawSpiStatistics(featureData);
+				counter++;
+			}
+			//load in the SPI json for that month
+			else
+			{
+				$.ajax({
+					url:'docs/spi_class_'+ihuMap.visibleLayer+'_months/'+wrUtils.getMapLayer(ihuMap.areaFiles,ihuMap.visibleLayer).filePrefix+wrUtils.formatDate(i).yearMon+'.json',
+					data: {spiDate:spiCurrentDate},
+					processData:false,
+					success: function(spiClasses)
 					{
-						var monthData = {month:this.data.spiDate.yearMon, values:spiClasses, type:ihuMap.visibleLayer};
-						ihuMap.spiClasses.push(monthData);
-						ihuMap.drawSpiStatistics(featureData);
+						if(spiClasses.length > 0)
+						{
+							var monthData = {month:this.data.spiDate.yearMon, values:spiClasses, type:ihuMap.visibleLayer};
+							ihuMap.spiClasses.push(monthData);
+							ihuMap.drawSpiStatistics(featureData);
+							counter++;
+						}
+					},
+					error: function(jqXHR,textStatus,errorThrown){
+						alert('Error requesting county data from server due to ['+textStatus+']')
 					}
-				},
-				error: function(jqXHR,textStatus,errorThrown){
-					alert('Error requesting county data from server due to ['+textStatus+']')
-				}
-			});
+				});
+			}
 		}
-	});
+	};
 }
 ihuMap.drawSpiStatistics = function(featureData){
 	//get the current polygon based on it's feature id (HA_NUM) and then loop through the SPI data to output to the html.
