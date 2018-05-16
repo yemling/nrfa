@@ -117,12 +117,6 @@ ihuMap.drawMap = function()
 
 ihuMap.zoomBasedLayerChange = function()
 {
-	ihuMap.map.eachLayer(function (layer) {
-        if (layer instanceof L.GeoJSON)
-        {
-            ihuMap.map.removeLayer(layer);
-        }
-    });
 	if(ihuMap.map.getZoom() > 6)
 	{
 		ihuMap.visibleLayer = 'groups';
@@ -131,10 +125,18 @@ ihuMap.zoomBasedLayerChange = function()
 	{
 		ihuMap.visibleLayer = 'areas';
 	}
-	var ihuArea = $.grep(ihuMap.areaFiles, function(obj){ 
+	var ihuArea = wrUtils.getMapLayer(ihuMap.mapLayers.getLayers(),ihuMap.visibleLayer);
+	if(typeof ihuArea === 'undefined')
+	{
+		ihuArea = $.grep(ihuMap.areaFiles, function(obj){ 
 			return (obj.name === ihuMap.visibleLayer);
-	})[0];
-	ihuMap.getIHUpolygons(ihuArea);
+		})[0];
+		ihuMap.getIHUpolygons(ihuArea);
+	}
+	else
+	{
+		ihuMap.getSPIclasses();
+	}
 	return;
 }
 

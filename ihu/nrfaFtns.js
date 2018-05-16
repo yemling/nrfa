@@ -124,8 +124,8 @@ spiMap.getNRFAstations = function()
 }
 spiMap.setMarkerIcon = function(stationLevel)
 {
-	var redIcon = '/i/images/redicon.png';
-	var blueIcon = '/i/images/blueicon.png';
+	var redIcon = '/nrfa/i/images/redicon.png';
+	var blueIcon = '/nrfa/i/images/blueicon.png';
 	if(stationLevel > 50)
 	{
 		iconSrc = redIcon;
