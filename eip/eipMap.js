@@ -196,8 +196,8 @@ spiMap.getNRFAstations = function()
 }
 spiMap.setMarkerIcon = function(stationLevel)
 {
-	var redIcon = '/i/images/redicon.png';
-	var blueIcon = '/i/images/blueicon.png';
+	var redIcon = '/includes/images/redicon.png';
+	var blueIcon = '/includes/images/blueicon.png';
 	if(stationLevel > 50)
 	{
 		iconSrc = redIcon;
@@ -208,9 +208,9 @@ spiMap.setMarkerIcon = function(stationLevel)
 	}
 	var markerIcon = L.icon({
 		iconUrl: iconSrc,
-		iconSize: [25, 41],
-		iconAnchor: [25, 41],
-		popupAnchor: [-3, -41]
+		iconSize: [15, 15],
+		iconAnchor: [15, 15],
+		popupAnchor: [-3, -15]
 	});
 	return markerIcon;
 }

@@ -110,11 +110,49 @@ ihuMap.drawMap = function()
 		$('#mapKey').append('<p><span style="background-color:'+detail.color+'">&nbsp;</span> '+detail.name+'</p>');
 	}
 	$('.spiPeriod').eq(ihuMap.spiLayerOptions.period-1).addClass('highlighted');
+	ihuMap.geolocate();
 	spiMap.drawMap();
 	ihuMap.zoomBasedLayerChange();
 	return;
 }
+ihuMap.geolocate = function()
+{
+	ihuMap.map.locate({setView: true, maxZoom: 15});
 
+	function onLocationFound(e) {
+		var radius = e.accuracy/2;
+
+		L.marker(e.latlng).addTo(ihuMap.map)
+			.bindPopup("You are within " + radius + " meters from this point").openPopup();
+
+		L.circle(e.latlng, radius).addTo(ihuMap.map);
+		ihuMap.map.initlat = e.latlng.lat;
+		ihuMap.map.initlng = e.latlng.lng;
+	}
+	
+	ihuMap.map.on('locationfound', onLocationFound);
+
+	function onLocationError(e) {
+		alert(e.message);
+	}
+
+	ihuMap.map.on('locationerror', onLocationError);
+	ihuMap.map.on('move', function(){
+	  var zm = ihuMap.map.getZoom();
+	  var ctr = ihuMap.map.getCenter(); 
+	  var ll = 'ZOOM:' + zm + ' | MAPCENTER: Lat: '+ ctr['lat'].toFixed(4) + ' Lng: '+ ctr['lng'].toFixed(4) + ' | <span id="recenter">Re-center</span>';
+	   $('#data').html(ll); 
+	});
+
+	$('#data').on('click', '#recenter',function(){
+	  ihuMap.map.panTo({lon: ihuMap.map.initlng, lat: ihuMap.map.initlat}, {'animate': true});                  
+	});
+	
+	var control = L.control.geonames({username: 'cbi.test'});
+    ihuMap.map.addControl(control);
+
+	return;
+}
 ihuMap.zoomBasedLayerChange = function()
 {
 	if(ihuMap.map.getZoom() > 6)

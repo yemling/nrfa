@@ -14,15 +14,18 @@ spiMap.nrfaDataTypes = [
 	{id:"amax-stage",name:"Annual maxima stage"},
 	{id:"amax-flow",name:"Annual maxima flow"}
 ];
-spiMap.tsChartData = [];
+spiMap.monthlyChartData = [];
+spiMap.dailyChartData = [];
+spiMap.stationDetail = false;
 spiMap.drawMap = function()
 {
 	spiMap.stationID = wrUtils.getParameterByName('station');
 	//set up the leaflet map at the UK boundary using mapbox.
 	spiMap.drawSPIlayer();
-	if(!(spiMap.stationID === null) && !isNaN(spiMap.stationID))
+	if(spiMap.stationID != null && !isNaN(spiMap.stationID))
 	{
 		spiMap.createStationData();
+		spiMap.stationDetail = true;
 	}	
 	else {
 		spiMap.getNRFAstations();
@@ -124,8 +127,8 @@ spiMap.getNRFAstations = function()
 }
 spiMap.setMarkerIcon = function(stationLevel)
 {
-	var redIcon = '/nrfa/i/images/redicon.png';
-	var blueIcon = '/nrfa/i/images/blueicon.png';
+	var redIcon = '/includes/images/redicon.png';
+	var blueIcon = '/includes/images/blueicon.png';
 	if(stationLevel > 50)
 	{
 		iconSrc = redIcon;
@@ -152,7 +155,7 @@ spiMap.drawNRFAstations = function(json)
 		var station = json.data[m];
 		station.coords = [station["lat-long"].latitude, station["lat-long"].longitude];
 		var marker = L.marker(station.coords, {title:station.name, icon:spiMap.setMarkerIcon(station["station-level"])});
-		var markerPopup = $('<div><a href="home.html?station='+station.id+'" class="stationPopup">'+station.name+'</a></div>');
+		var markerPopup = $('<div>'+station.id+': <a href="home.html?station='+station.id+'" class="stationPopup">'+station.name+'</a></div>');
 		markerPopup.on('click', '.stationPopup',spiMap.createStationData);
 		marker.bindPopup(markerPopup[0]);
 		ihuMap.map.addLayer(marker); // If don't want to cluster, uncomment this line
@@ -215,8 +218,10 @@ spiMap.getTimeSeriesData = function(stationID)
 	for(var d=0; d<spiMap.nrfaDataTypes.length; d++)
 	{
 		var dataset = spiMap.nrfaDataTypes[d];
+		var stationTSUrl = spiMap.nrfaWMS+'/time-series?format=json-object&data-type='+dataset.id+'&station='+stationID;
+		console.log(stationTSUrl);
 		$.ajax({
-			url:spiMap.nrfaWMS+'/time-series?format=json-object&data-type='+dataset.id+'&station='+stationID,
+			url:stationTSUrl,
 			crossdomain:true,
 			jsonp: "callback",
 			dataType:"jsonp",
@@ -242,10 +247,13 @@ spiMap.timeSetSeriesData = function(tsData,tsName)
 	var monthCounter = 0;
 	if(tsData[0].indexOf('-'))//can't make a graph if we don't know the start date of the series.
 	{
-		var labels = [];
-		var values = [];
+		var monthlyLabels = [];
+		var dailyLabels = [];
+		var monthlyValues = [];
+		var dailyValues = [];
 		var canvasJs = [];
 		var dyGraph = [];
+		var dateType = 'monthly';
 		var startDate = tsData[0].split('-');
 		for (var d=0; d<tsData.length; d++)
 		{
@@ -263,23 +271,31 @@ spiMap.timeSetSeriesData = function(tsData,tsName)
 					startDate[0] = parseFloat(startDate[0]) + 1;
 					startDate[1] = 1;
 				}
-				var label = startDate[0] + '-' + startDate[1];
-				if(startDate.length > 1)
+				var monthlyLabel = startDate[0] + '-' + startDate[1];
+				if(startDate.length > 2)
 				{
-					label += '-' + startDate[2];
+					dailyLabel =  monthlyLabel + '-' + startDate[2];
+					dailyLabels.push(dailyLabel);
+					dailyValues.push(cell);
 				}
-				labels.push(label);
-				values.push(cell);
+				else
+				{
+					monthlyLabels.push(monthlyLabel);
+					monthlyValues.push(cell);
+				}
 			}  
 		}
+	spiMap.monthlyChartData.push({x:monthlyLabels, y:monthlyValues,name:tsName, type:"bar"});
+	spiMap.dailyChartData.push({x:dailyLabels, y:dailyValues,name:tsName, type:"bar"});
 	}
-	spiMap.tsChartData.push({x:labels, y:values,name:tsName, type:"bar"});
 	return;
 };
 spiMap.drawPlotly = function()
 {
-	var tsGraph = document.getElementById('plotlyAllDiv');
-	Plotly.plot(tsGraph, spiMap.tsChartData);
+	var montlyTsGraph = document.getElementById('plotlyMonthlyDiv');
+	Plotly.plot(montlyTsGraph, spiMap.monthlyChartData);
+	var dailyTsGraph = document.getElementById('plotlyDailyDiv');
+	Plotly.plot(dailyTsGraph, spiMap.dailyChartData);
 	/* if(spiMap.tsChartData.length > 0)
 	{
 		for(var i = 0; i<spiMap.tsChartData.length; i++)
@@ -295,7 +311,10 @@ spiMap.drawPlotly = function()
 }
 spiMap.pageLoaded = function()
 {
-	spiMap.drawPlotly();
+	if(spiMap.stationDetail)
+	{
+		spiMap.drawPlotly();
+	}
 	return;
 }
 $(document).ajaxStop(spiMap.pageLoaded);
